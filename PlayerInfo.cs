@@ -37,13 +37,17 @@ namespace CreateEspnDBFile
             JToken playerInfo = json["page"]["content"]["player"]["plyrHdr"]["ath"];
 
 
-            var player = new Player();
-            player.Id = id;
-            player.Name = playerInfo["dspNm"].ToString();
-            player.Team = (playerInfo["tm"] ?? "").ToString();
-            int.TryParse(playerInfo["dob"].ToString().Split("()".ToCharArray(), StringSplitOptions.RemoveEmptyEntries).Last(), out int age);
-            player.Age = age;
-            player.Misc = $"{playerInfo["pos"]} | {playerInfo["sts"]}";
+            int.TryParse(
+                playerInfo["dob"].ToString().Split("()".ToCharArray(), StringSplitOptions.RemoveEmptyEntries).Last(),
+                out int age);
+            var player = new Player
+            {
+                Id = id,
+                Name = playerInfo["dspNm"].ToString(),
+                Team = (playerInfo["tm"] ?? "").ToString(),
+                Age = age,
+                Misc = $"{playerInfo["pos"]} | {playerInfo["sts"]}"
+            };
 
             return player;
         }
