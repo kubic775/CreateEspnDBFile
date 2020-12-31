@@ -56,7 +56,7 @@ namespace CreateEspnDBFile
         {
             int gamesHistoryLength = ConfigurationManager.AppSettings["gamesHistoryLength"].ToInt();
             var years = Enumerable.Range(Utils.GetCurrentYear() - gamesHistoryLength + 1, gamesHistoryLength + 1).Reverse();
-           
+
             if (ConfigurationManager.AppSettings["UpdateOnlyLastYearGames"].ToBool())
                 years = new[] { years.Max() };
 
@@ -65,7 +65,10 @@ namespace CreateEspnDBFile
                 var gamesUrl = playerUrl + $"/type/nba/year/{year}";
                 var gamesData = Utils.GetSourceFromURL(gamesUrl);
                 int start = gamesData.IndexOf("Regular Season");
+                if (start == -1) return;
                 int end = gamesData.IndexOf("Preseason");
+                if (end == -1)
+                    end = gamesData.IndexOf("Data provided by Elias Sports Bureau");
                 if (start == -1 || end == -1) return;
                 var gamesStr = gamesData.Substring(start, end - start);
                 var games = CreatePlayerGames(gamesStr, year);
