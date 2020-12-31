@@ -74,7 +74,7 @@ namespace CreateEspnDBFile
             }
             else
             {
-                if (!ConfigurationManager.AppSettings["UpdateOnlyLastYearGames"].ToBool())
+                if (!ConfigurationManager.AppSettings["updateExistPlayer"].ToBool())
                     return;
             }
 

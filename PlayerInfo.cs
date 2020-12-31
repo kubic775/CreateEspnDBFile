@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.IO;
 using System.Linq;
 using System.Text;
 using CreateEspnDBFile.Models;
@@ -13,15 +14,26 @@ namespace CreateEspnDBFile
     {
         public readonly Player Player;
         public readonly List<Game> Games;
+        public bool Valid;
 
         public PlayerInfo(int id)
         {
-            string playerUrl = ConfigurationManager.AppSettings["playerUrl"].Replace("{id}", id.ToString());
-            string playerStr = Utils.GetSourceFromURL(playerUrl);
-            Player = UpdatePlayerInfo(playerStr, id);
-            Console.WriteLine($"Current Player - {Player.Name}");
-            Games = new List<Game>();
-            CreatePlayerGames(playerUrl);
+            try
+            {
+                string playerUrl = ConfigurationManager.AppSettings["playerUrl"].Replace("{id}", id.ToString());
+                string playerStr = Utils.GetSourceFromURL(playerUrl);
+                Player = UpdatePlayerInfo(playerStr, id);
+                Console.WriteLine($"Current Player - {Player.Name}");
+                Games = new List<Game>();
+                CreatePlayerGames(playerUrl);
+                Valid = true;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                File.AppendAllLines("Errors.txt", new[] { $"{id}" });
+                Valid = false;
+            }
         }
 
         private Player UpdatePlayerInfo(string playerStr, int id)
@@ -57,19 +69,16 @@ namespace CreateEspnDBFile
             int gamesHistoryLength = ConfigurationManager.AppSettings["gamesHistoryLength"].ToInt();
             var years = Enumerable.Range(Utils.GetCurrentYear() - gamesHistoryLength + 1, gamesHistoryLength + 1).Reverse();
 
-            if (ConfigurationManager.AppSettings["UpdateOnlyLastYearGames"].ToBool())
-                years = new[] { years.Max() };
-
             foreach (int year in years)
             {
                 var gamesUrl = playerUrl + $"/type/nba/year/{year}";
                 var gamesData = Utils.GetSourceFromURL(gamesUrl);
                 int start = gamesData.IndexOf("Regular Season");
-                if (start == -1) return;
+                if (start == -1) continue;
                 int end = gamesData.IndexOf("Preseason");
                 if (end == -1)
                     end = gamesData.IndexOf("Data provided by Elias Sports Bureau");
-                if (start == -1 || end == -1) return;
+                if (start == -1 || end == -1) continue;
                 var gamesStr = gamesData.Substring(start, end - start);
                 var games = CreatePlayerGames(gamesStr, year);
                 Games.AddRange(games);
