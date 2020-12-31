@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -51,23 +52,36 @@ namespace CreateEspnDBFile
         public static bool IsPlayerExist(long playerId)
         {
             using var db = new EspnDB();
-           
+
             var players = db.Players.ToList();
             return players.Any(p => p.Id == playerId);
         }
 
+        public static bool IsGameExist(long playerId, DateTime gameDate)
+        {
+            using var db = new EspnDB();
+            return db.Games.Any(g => g.PlayerId == playerId && g.GameDate.Date.Equals(gameDate.Date));
+        }
+
+
         public static void AddNewPlayer(PlayerInfo player)
         {
-            //if (!db.Players.Any(p => p.Id == player.Player.Id))
-            if (IsPlayerExist(player.Player.Id))
-                return;
-
             using var db = new EspnDB();
-            db.Players.Add(player.Player);
-            db.SaveChanges();
+            if (!IsPlayerExist(player.Player.Id))
+            {
+                db.Players.Add(player.Player);
+                db.SaveChanges();
+            }
+            else
+            {
+                if (!ConfigurationManager.AppSettings["UpdateOnlyLastYearGames"].ToBool())
+                    return;
+            }
 
             foreach (Game game in player.Games)
             {
+                if (IsGameExist(player.Player.Id, game.GameDate))
+                    continue;
                 game.Pk = GetNextGamePk();
                 db.Games.Add(game);
             }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -25,7 +26,7 @@ namespace CreateEspnDBFile
                 {
                     Console.Title = $"{counter}/{playerIds.Length}";
                     Console.WriteLine($"Start Create Player Id {playerId} ({counter++}/{playerIds.Length})");
-                    if (DBMethods.IsPlayerExist(playerId))
+                    if (!ConfigurationManager.AppSettings["UpdateOnlyLastYearGames"].ToBool() && DBMethods.IsPlayerExist(playerId))
                     {
                         Console.WriteLine("Already Exist In DB");
                         continue;

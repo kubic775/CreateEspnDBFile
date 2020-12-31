@@ -34,6 +34,11 @@ namespace CreateEspnDBFile
             int.TryParse(str, out int num);
             return num;
         }
+
+        public static bool ToBool(this string str)
+        {
+            return str.ToLower().Equals("true") || str.Equals("1");
+        }
     }
 
 

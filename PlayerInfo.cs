@@ -56,6 +56,9 @@ namespace CreateEspnDBFile
         {
             int gamesHistoryLength = ConfigurationManager.AppSettings["gamesHistoryLength"].ToInt();
             var years = Enumerable.Range(Utils.GetCurrentYear() - gamesHistoryLength + 1, gamesHistoryLength + 1).Reverse();
+           
+            if (ConfigurationManager.AppSettings["UpdateOnlyLastYearGames"].ToBool())
+                years = new[] { years.Max() };
 
             foreach (int year in years)
             {
@@ -63,7 +66,7 @@ namespace CreateEspnDBFile
                 var gamesData = Utils.GetSourceFromURL(gamesUrl);
                 int start = gamesData.IndexOf("Regular Season");
                 int end = gamesData.IndexOf("Preseason");
-                if (start == -1 || end==-1) return;
+                if (start == -1 || end == -1) return;
                 var gamesStr = gamesData.Substring(start, end - start);
                 var games = CreatePlayerGames(gamesStr, year);
                 Games.AddRange(games);
