@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -15,8 +16,8 @@ namespace CreateEspnDBFile
         static void Main(string[] args)
         {
             Console.WriteLine($"DB Path = {DBMethods.GetDataBaseConnectionString()}");
-            //var playerIds = File.ReadAllLines("Teams.txt").AsParallel().SelectMany(GetActivePlayersIds).OrderBy(i => i).ToArray();
-            var playerIds = File.ReadAllText("playerIds.csv").Split(',').Select(s => s.ToInt()).ToArray();
+            var playerIds = File.ReadAllLines("Teams.txt").AsParallel().WithDegreeOfParallelism(32).SelectMany(GetActivePlayersIds).OrderBy(i => i).ToArray();
+            //var playerIds = File.ReadAllText("playerIds.csv").Split(',').Select(s => s.ToInt()).ToArray();
             //File.WriteAllText("playerIds.csv", string.Join(',', playerIds));
             if (ConfigurationManager.AppSettings["updateSpecificPlayers"].ToBool())
             {
@@ -33,16 +34,15 @@ namespace CreateEspnDBFile
 
         private static void UpdatePlayersInParallel(int[] playerIds)
         {
+            Stopwatch sw = Stopwatch.StartNew();
             int counter = 1;
-            var players = playerIds.AsParallel().WithExecutionMode(ParallelExecutionMode.ForceParallelism).WithDegreeOfParallelism(32).Select(id =>
+            var players = playerIds.AsParallel().WithExecutionMode(ParallelExecutionMode.ForceParallelism).WithDegreeOfParallelism(64).Select(id =>
             {
                 Console.Title = $"{counter++}/{playerIds.Length}";
                 return new PlayerInfo(id);
             }).ToArray();
-            foreach (PlayerInfo player in players.Where(p => p.Valid))
-            {
-                DBMethods.AddNewPlayer(player);
-            }
+            DBMethods.UpdatePlayersGames(players);
+            Console.WriteLine($"Total Runtime: {sw.Elapsed}");
         }
 
         private static void UpdatePlayers(int[] playerIds)

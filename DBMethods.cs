@@ -57,12 +57,21 @@ namespace CreateEspnDBFile
             return players.Any(p => p.Id == playerId);
         }
 
+        public static bool IsPlayerExist(Player player, Player[] dbPlayers)
+        {
+            return dbPlayers.Any(p => p.Id == player.Id);
+        }
+
         public static bool IsGameExist(long playerId, DateTime gameDate)
         {
             using var db = new EspnDB();
             return db.Games.Any(g => g.PlayerId == playerId && g.GameDate.Date.Equals(gameDate.Date));
         }
 
+        public static bool IsGameExist(Game newGame, Game[] allGames)
+        {
+            return allGames.Where(g => g.PlayerId == newGame.PlayerId).Any(g => g.GameDate.Date.Equals(newGame.GameDate.Date));
+        }
 
         public static void AddNewPlayer(PlayerInfo player)
         {
@@ -87,6 +96,33 @@ namespace CreateEspnDBFile
             }
             db.SaveChanges();
             Console.WriteLine($"Player {player.Player.Name} Uploaded To DB");
+        }
+
+        public static void UpdatePlayersGames(PlayerInfo[] players)
+        {
+            using var db = new EspnDB();
+
+            var dbPlayers = db.Players.ToArray();
+            var newPlayers = players.Where(p => !IsPlayerExist(p.Player, dbPlayers)).Select(p => p.Player).ToArray();
+            if (newPlayers.Any())
+            {
+                db.Players.AddRange(newPlayers);
+                db.SaveChanges();
+                Console.WriteLine($"{newPlayers.Length} New Players Uploaded To DB");
+            }
+
+            var dbGames = db.Games.ToArray();
+            Console.WriteLine($"Found {dbGames.Length} Games in DB, Search For New Games");
+            var playerGames = players.SelectMany(p => p.Games).ToArray();
+            var newGames = playerGames.Where(g => !IsGameExist(g, dbGames)).ToArray();
+            Console.WriteLine($"Found {newGames.Length} New Games, Start Upload To DB");
+            foreach (Game newGame in newGames)
+            {
+                newGame.Pk = GetNextGamePk();
+                db.Games.Add(newGame);
+            }
+            db.SaveChanges();
+            Console.WriteLine($"{newGames.Length} New Games Uploaded To DB");
         }
     }
 }
