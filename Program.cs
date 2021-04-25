@@ -15,14 +15,18 @@ namespace CreateEspnDBFile
     {
         static void Main(string[] args)
         {
+            int[] playerIds;
             Console.WriteLine($"DB Path = {DBMethods.GetDataBaseConnectionString()}");
-            var playerIds = File.ReadAllLines("Teams.txt").AsParallel().WithDegreeOfParallelism(32).SelectMany(GetActivePlayersIds).OrderBy(i => i).ToArray();
-            //var playerIds = File.ReadAllText("playerIds.csv").Split(',').Select(s => s.ToInt()).ToArray();
-            //File.WriteAllText("playerIds.csv", string.Join(',', playerIds));
             if (ConfigurationManager.AppSettings["updateSpecificPlayers"].ToBool())
             {
                 playerIds = ConfigurationManager.AppSettings["specificPlayersIds"].
                     Split(',').Select(s => s.ToInt()).ToArray();
+            }
+            else
+            {
+                playerIds = File.ReadAllLines("Teams.txt").AsParallel().WithDegreeOfParallelism(32)
+                    .SelectMany(GetActivePlayersIds).OrderBy(i => i).ToArray();
+                //playerIds = File.ReadAllText("playerIds.csv").Split(',').Select(s => s.ToInt()).ToArray();
             }
             Console.WriteLine($"Found {playerIds.Length} PlayerIds");
 

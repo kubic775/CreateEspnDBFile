@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -100,10 +101,11 @@ namespace CreateEspnDBFile
 
         public static void UpdatePlayersGames(PlayerInfo[] players)
         {
+            players = FilterPlayersNotValid(players);
             using var db = new EspnDB();
 
             var dbPlayers = db.Players.ToArray();
-            var newPlayers = players.Where(p => !IsPlayerExist(p.Player, dbPlayers)).Select(p => p.Player).ToArray();
+            var newPlayers = players.Where(p => !IsPlayerExist(p.Player, dbPlayers) && p.Valid).Select(p => p.Player).ToArray();
             if (newPlayers.Any())
             {
                 db.Players.AddRange(newPlayers);
@@ -123,6 +125,19 @@ namespace CreateEspnDBFile
             }
             db.SaveChanges();
             Console.WriteLine($"{newGames.Length} New Games Uploaded To DB");
+        }
+
+        private static PlayerInfo[] FilterPlayersNotValid(PlayerInfo[] players)
+        {
+            var badPlayers = players.Where(p => !p.Valid).ToArray();
+            Console.WriteLine($"Found {badPlayers.Length} Not Valid Players:");
+            foreach (var player in badPlayers)
+            {
+                Console.WriteLine(player.ToString());
+                File.AppendAllText("badPlayers.txt", player + Environment.NewLine);
+            }
+
+            return players.Where(p => p.Valid).ToArray();
         }
     }
 }

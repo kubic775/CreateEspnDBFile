@@ -30,9 +30,10 @@ namespace CreateEspnDBFile
             }
             catch (Exception e)
             {
+                Valid = false;
                 Console.WriteLine(e);
                 File.AppendAllLines("Errors.txt", new[] { $"{id}" });
-                Valid = false;
+                Player = new Player { Id = id };
             }
         }
 

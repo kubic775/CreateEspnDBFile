@@ -13,5 +13,10 @@ namespace CreateEspnDBFile.Models
         public long? Age { get; set; }
         public string Misc { get; set; }
         public long? Type { get; set; }
+
+        public override string ToString()
+        {
+            return $"{Name}, {Team}, {Id}";
+        }
     }
 }
