@@ -20,7 +20,7 @@ namespace CreateEspnDBFile
             if (ConfigurationManager.AppSettings["updateSpecificPlayers"].ToBool())
             {
                 playerIds = ConfigurationManager.AppSettings["specificPlayersIds"].
-                    Split(',').Select(s => s.ToInt()).ToArray();
+                    Split(',', StringSplitOptions.RemoveEmptyEntries).Select(s => s.ToInt()).ToArray();
             }
             else
             {
@@ -34,6 +34,13 @@ namespace CreateEspnDBFile
                 UpdatePlayersInParallel(playerIds);
             else
                 UpdatePlayers(playerIds);
+
+            if (ConfigurationManager.AppSettings["updateRosterPlayers"].ToBool())
+            {
+                var rosterPlayersIds = ConfigurationManager.AppSettings["rosterPlayersIds"].Split(",", StringSplitOptions.RemoveEmptyEntries)
+                    .Select(i => i.ToInt()).ToArray();
+                DBMethods.UpdateRosterPlayers(rosterPlayersIds);
+            }
         }
 
         private static void UpdatePlayersInParallel(int[] playerIds)

@@ -139,5 +139,25 @@ namespace CreateEspnDBFile
 
             return players.Where(p => p.Valid).ToArray();
         }
+
+        public static void UpdateRosterPlayers(int[] playersIds)
+        {
+            Console.WriteLine("\nStart Update Roster Players\n");
+            using var db = new EspnDB();
+            foreach (int id in playersIds)
+            {
+                var player = db.Players.FirstOrDefault(p => p.Id == id);
+                if (player == null)
+                {
+                    Console.WriteLine($"Can't Find Player Id {id} In DB");
+                    continue;
+                }
+
+                Console.WriteLine($"{player.Id} - {player.Name}");
+                player.Type = 1;
+                db.SaveChanges();
+            }
+            Console.WriteLine("Done");
+        }
     }
 }
