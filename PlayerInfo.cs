@@ -78,6 +78,9 @@ namespace CreateEspnDBFile
                 int end = gamesData.IndexOf("Preseason");
                 if (end == -1)
                     end = gamesData.IndexOf("Data provided by Elias Sports Bureau");
+                if (end == -1)
+                    end = gamesData.IndexOf("glossary");
+                
                 if (start == -1 || end == -1) continue;
                 var gamesStr = gamesData.Substring(start, end - start);
                 var games = CreatePlayerGames(gamesStr, year);
