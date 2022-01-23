@@ -26,7 +26,6 @@ namespace CreateEspnDBFile
             {
                 playerIds = File.ReadAllLines("Teams.txt").AsParallel().WithDegreeOfParallelism(32)
                     .SelectMany(GetActivePlayersIds).OrderBy(i => i).ToArray();
-                //playerIds = File.ReadAllText("playerIds.csv").Split(',').Select(s => s.ToInt()).ToArray();
             }
             Console.WriteLine($"Found {playerIds.Length} PlayerIds");
 
@@ -35,12 +34,24 @@ namespace CreateEspnDBFile
             else
                 UpdatePlayers(playerIds);
 
-            if (ConfigurationManager.AppSettings["updateRosterPlayers"].ToBool())
+            if (ConfigurationManager.AppSettings["updateRostersPlayers"].ToBool())
             {
-                var rosterPlayersIds = ConfigurationManager.AppSettings["rosterPlayersIds"].Split(",", StringSplitOptions.RemoveEmptyEntries)
-                    .Select(i => i.ToInt()).ToArray();
-                DBMethods.UpdateRosterPlayers(rosterPlayersIds);
+                Stopwatch sw = Stopwatch.StartNew();
+                var yahooTeams = YahooLeague.GetYahooTeams();
+                DBMethods.UpdateYahooTeams(yahooTeams);
+                Console.WriteLine($"Total Runtime: {sw.Elapsed}");
             }
+        }
+
+        static List<int> GetActivePlayersIds(string teamUrl)
+        {
+            Console.WriteLine("Extract PlayerIds From " + teamUrl);
+            HtmlDocument doc = new HtmlWeb().Load(teamUrl);
+            var linkedPages = doc.DocumentNode.Descendants("a")
+                .Select(a => a.GetAttributeValue("href", null))
+                .Where(u => !String.IsNullOrEmpty(u) && u.Contains(@"https://www.espn.com/nba/player/_/id/"))
+                .ToList();
+            return linkedPages.Select(s => Regex.Match(s, @"\d+").Value.ToInt()).Distinct().ToList();
         }
 
         private static void UpdatePlayersInParallel(int[] playerIds)
@@ -83,15 +94,22 @@ namespace CreateEspnDBFile
             }
         }
 
-        static List<int> GetActivePlayersIds(string teamUrl)
+        private static string[] GetTeamPlayersFromYahoo(int teamNumber)
         {
-            Console.WriteLine("Extract PlayerIds From " + teamUrl);
-            HtmlDocument doc = new HtmlWeb().Load(teamUrl);
-            var linkedPages = doc.DocumentNode.Descendants("a")
-                .Select(a => a.GetAttributeValue("href", null))
-                .Where(u => !String.IsNullOrEmpty(u) && u.Contains(@"https://www.espn.com/nba/player/_/id/"))
-                .ToList();
-            return linkedPages.Select(s => Regex.Match(s, @"\d+").Value.ToInt()).Distinct().ToList();
+            HashSet<string> players = new HashSet<string>();
+            using var client = new HttpClient();
+            var teamUrl = ConfigurationManager.AppSettings["yahooTeamsUrl"].Replace("{teamId}", teamNumber.ToString());
+            var teamStr = client.GetStringAsync(teamUrl).Result;
+
+            int i1 = teamStr.IndexOf(@"Nowrap name F-link");
+            while (i1 != -1)
+            {
+                int i2 = teamStr.IndexOf(@"</a>", i1);
+                string playerName = teamStr.Substring(i1 + 85, i2 - i1 - 85);
+                players.Add(playerName);
+                i1 = teamStr.IndexOf(@"Nowrap name F-link", i2);
+            }
+            return players.ToArray();
         }
     }
 

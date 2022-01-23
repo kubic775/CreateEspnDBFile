@@ -3,3 +3,4 @@
 /obj/
 /bin/Release/netcoreapp3.1/espn.sqlite
 /bin/Release/netcoreapp3.1/Errors.txt
+/bin

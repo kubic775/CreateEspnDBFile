@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CreateEspnDBFile
 {
+    //Scaffold-Dbcontext "DataSource=Z:\Dropbox\NBA fantasy\CreateEspnDBFile\espn.sqlite" Microsoft.EntityFrameworkCore.Sqlite -Context EspnDB -OutputDir Models -f
     public class DBMethods
     {
         private static long _nextGamePk = -1;
@@ -123,6 +124,8 @@ namespace CreateEspnDBFile
                 newGame.Pk = GetNextGamePk();
                 db.Games.Add(newGame);
             }
+
+            db.GlobalParams.Add(new GlobalParam { Pk = 1, LastUpdateTime = DateTime.Now });
             db.SaveChanges();
             Console.WriteLine($"{newGames.Length} New Games Uploaded To DB");
         }
@@ -140,23 +143,21 @@ namespace CreateEspnDBFile
             return players.Where(p => p.Valid).ToArray();
         }
 
-        public static void UpdateRosterPlayers(int[] playersIds)
+        public static void UpdateYahooTeams(List<YahooTeam> teams)
         {
-            Console.WriteLine("\nStart Update Roster Players\n");
+            Console.WriteLine("Start Update Yahoo Teams And Players In DB");
+            int teamPk = 1;
             using var db = new EspnDB();
-            foreach (int id in playersIds)
+            foreach (var team in teams)
             {
-                var player = db.Players.FirstOrDefault(p => p.Id == id);
-                if (player == null)
+                db.YahooTeams.Add(new Models.YahooTeam { Pk = teamPk++, TeamId = team.Id, TeamName = team.Name });
+                var currentTeamPlayers = db.Players.Where(p => team.PlayersNames.Contains(p.Name)).ToList();
+                foreach (Player player in currentTeamPlayers)
                 {
-                    Console.WriteLine($"Can't Find Player Id {id} In DB");
-                    continue;
+                    player.TeamNumber = team.Id;
                 }
-
-                Console.WriteLine($"{player.Id} - {player.Name}");
-                player.Type = 1;
-                db.SaveChanges();
             }
+            db.SaveChanges();
             Console.WriteLine("Done");
         }
     }

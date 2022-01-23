@@ -7,13 +7,6 @@ namespace CreateEspnDBFile.Models
 {
     public partial class Game
     {
-        public override string ToString()
-        {
-            return $"{nameof(Opp)}: {Opp}, {nameof(GameDate)}: {GameDate:d}, {nameof(Pts)}: {Pts}, {nameof(Reb)}: {Reb}, {nameof(Ast)}: {Ast}, {nameof(Tpm)}: {Tpm}, " +
-                   $"{nameof(Fga)}: {Fga}, {nameof(Fgm)}: {Fgm}, {nameof(Fta)}: {Fta}, {nameof(Ftm)}: {Ftm}, {nameof(Stl)}: {Stl}, {nameof(Blk)}: {Blk}, {nameof(To)}: {To}, " +
-                   $"{nameof(Min)}: {Min}, {nameof(Pf)}: {Pf}, {nameof(FtPer)}: {FtPer * 100:##.###}, {nameof(FgPer)}: {FgPer * 100:##.###}";
-        }
-
         public long Pk { get; set; }
         public long? PlayerId { get; set; }
         public DateTime GameDate { get; set; }
