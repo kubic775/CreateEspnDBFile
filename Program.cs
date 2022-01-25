@@ -4,16 +4,65 @@ using System.Configuration;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+using System.Threading;
+using System.Timers;
 using HtmlAgilityPack;
+using Timer = System.Timers.Timer;
 
 namespace CreateEspnDBFile
 {
     class Program
     {
+        static Timer _updateTimer;
+        private static readonly AutoResetEvent AutoResetEvent = new AutoResetEvent(false);
+
         static void Main(string[] args)
+        {
+            try
+            {
+                InitTimer();
+                RunUpdateTimer(null, null);
+                AutoResetEvent.WaitOne();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+            finally
+            {
+                _updateTimer?.Dispose();
+            }
+        }
+
+        private static void InitTimer()
+        {
+            _updateTimer = new Timer(TimeSpan
+                .FromMinutes(ConfigurationManager.AppSettings["updateTimerInterval"].ToInt()).TotalMilliseconds);
+            _updateTimer.Elapsed += RunUpdateTimer;
+            _updateTimer.Start();
+        }
+
+        private static void RunUpdateTimer(object sender, ElapsedEventArgs e)
+        {
+            try
+            {
+                Console.WriteLine($"{DateTime.Now} Start Update DB File");
+                Stopwatch sw = Stopwatch.StartNew();
+                UpdateDBFile();
+                Console.WriteLine($"Total Runtime: {sw.Elapsed}");
+            }
+            catch (Exception ex)
+            {
+                var msg = $"Error While Run Update Timer - {ex.Message}";
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine(msg);
+                File.AppendAllLines("Errors.txt", new[] { msg });
+                Console.ForegroundColor = ConsoleColor.White;
+            }
+        }
+
+        private static void UpdateDBFile()
         {
             int[] playerIds;
             Console.WriteLine($"DB Path = {DBMethods.GetDataBaseConnectionString()}");
@@ -36,11 +85,13 @@ namespace CreateEspnDBFile
 
             if (ConfigurationManager.AppSettings["updateRostersPlayers"].ToBool())
             {
-                Stopwatch sw = Stopwatch.StartNew();
+                //Stopwatch sw = Stopwatch.StartNew();
                 var yahooTeams = YahooLeague.GetYahooTeams();
                 DBMethods.UpdateYahooTeams(yahooTeams);
-                Console.WriteLine($"Total Runtime: {sw.Elapsed}");
+                //Console.WriteLine($"Total Runtime: {sw.Elapsed}");
             }
+
+            DBMethods.UpdateLastUpdateTime();
         }
 
         static List<int> GetActivePlayersIds(string teamUrl)
@@ -56,7 +107,7 @@ namespace CreateEspnDBFile
 
         private static void UpdatePlayersInParallel(int[] playerIds)
         {
-            Stopwatch sw = Stopwatch.StartNew();
+            //Stopwatch sw = Stopwatch.StartNew();
             int counter = 1;
             var players = playerIds.AsParallel().WithExecutionMode(ParallelExecutionMode.ForceParallelism).WithDegreeOfParallelism(64).Select(id =>
             {
@@ -64,7 +115,7 @@ namespace CreateEspnDBFile
                 return new PlayerInfo(id);
             }).ToArray();
             DBMethods.UpdatePlayersGames(players);
-            Console.WriteLine($"Total Runtime: {sw.Elapsed}");
+            //Console.WriteLine($"Total Runtime: {sw.Elapsed}");
         }
 
         private static void UpdatePlayers(int[] playerIds)
@@ -94,23 +145,6 @@ namespace CreateEspnDBFile
             }
         }
 
-        private static string[] GetTeamPlayersFromYahoo(int teamNumber)
-        {
-            HashSet<string> players = new HashSet<string>();
-            using var client = new HttpClient();
-            var teamUrl = ConfigurationManager.AppSettings["yahooTeamsUrl"].Replace("{teamId}", teamNumber.ToString());
-            var teamStr = client.GetStringAsync(teamUrl).Result;
-
-            int i1 = teamStr.IndexOf(@"Nowrap name F-link");
-            while (i1 != -1)
-            {
-                int i2 = teamStr.IndexOf(@"</a>", i1);
-                string playerName = teamStr.Substring(i1 + 85, i2 - i1 - 85);
-                players.Add(playerName);
-                i1 = teamStr.IndexOf(@"Nowrap name F-link", i2);
-            }
-            return players.ToArray();
-        }
     }
 
 }

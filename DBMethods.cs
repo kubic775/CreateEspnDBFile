@@ -125,7 +125,6 @@ namespace CreateEspnDBFile
                 db.Games.Add(newGame);
             }
 
-            db.GlobalParams.Add(new GlobalParam { Pk = 1, LastUpdateTime = DateTime.Now });
             db.SaveChanges();
             Console.WriteLine($"{newGames.Length} New Games Uploaded To DB");
         }
@@ -159,6 +158,17 @@ namespace CreateEspnDBFile
             }
             db.SaveChanges();
             Console.WriteLine("Done");
+        }
+
+        public static void UpdateLastUpdateTime()
+        {
+            using var db = new EspnDB();
+            if (!db.GlobalParams.Any())
+                db.GlobalParams.Add(new GlobalParam { Pk = 1, LastUpdateTime = DateTime.Now });
+            else
+                db.GlobalParams.First().LastUpdateTime = DateTime.Now;
+            
+            db.SaveChanges();
         }
     }
 }
