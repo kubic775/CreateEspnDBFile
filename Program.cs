@@ -54,7 +54,7 @@ namespace CreateEspnDBFile
             }
             catch (Exception ex)
             {
-                var msg = $"Error While Run Update Timer - {ex.Message}";
+                var msg = $"Error While Run Update Timer - {ex.Message}{Environment.NewLine}{ex.InnerException?.Message}";
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine(msg);
                 File.AppendAllLines("Errors.txt", new[] { msg });
@@ -91,6 +91,7 @@ namespace CreateEspnDBFile
                 //Console.WriteLine($"Total Runtime: {sw.Elapsed}");
             }
 
+            Console.WriteLine($"Set LastUpdateTime - {DateTime.Now}");
             DBMethods.UpdateLastUpdateTime();
         }
 

@@ -51,6 +51,15 @@ namespace CreateEspnDBFile
             return pk;
         }
 
+        private static long GetNextYahooTeamPk()
+        {
+            using var db = new EspnDB();
+            if (!db.YahooTeams.Any())
+                return 1;
+            else
+                return db.YahooTeams.Max(t => t.Pk) + 1;
+        }
+
         public static bool IsPlayerExist(long playerId)
         {
             using var db = new EspnDB();
@@ -142,21 +151,25 @@ namespace CreateEspnDBFile
             return players.Where(p => p.Valid).ToArray();
         }
 
-        public static void UpdateYahooTeams(List<YahooTeam> teams)
+        public static void UpdateYahooTeams(List<YahooLeagueTeam> teams)
         {
             Console.WriteLine("Start Update Yahoo Teams And Players In DB");
-            int teamPk = 1;
             using var db = new EspnDB();
             foreach (var team in teams)
             {
-                db.YahooTeams.Add(new Models.YahooTeam { Pk = teamPk++, TeamId = team.Id, TeamName = team.Name });
+                var dbTeam = db.YahooTeams.FirstOrDefault(t => t.TeamId == team.Id);
+                if (dbTeam == null) //add new team
+                    db.YahooTeams.Add(new YahooTeam { Pk = GetNextYahooTeamPk(), TeamId = team.Id, TeamName = team.Name });
+                else //update team
+                    dbTeam.TeamName = team.Name;
+
                 var currentTeamPlayers = db.Players.Where(p => team.PlayersNames.Contains(p.Name)).ToList();
                 foreach (Player player in currentTeamPlayers)
                 {
                     player.TeamNumber = team.Id;
                 }
+                db.SaveChanges();
             }
-            db.SaveChanges();
             Console.WriteLine("Done");
         }
 
@@ -167,7 +180,7 @@ namespace CreateEspnDBFile
                 db.GlobalParams.Add(new GlobalParam { Pk = 1, LastUpdateTime = DateTime.Now });
             else
                 db.GlobalParams.First().LastUpdateTime = DateTime.Now;
-            
+
             db.SaveChanges();
         }
     }

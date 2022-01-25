@@ -10,12 +10,12 @@ namespace CreateEspnDBFile
 {
     public static class YahooLeague
     {
-        public static List<YahooTeam> GetYahooTeams()
+        public static List<YahooLeagueTeam> GetYahooTeams()
         {
             Console.WriteLine("\nStart Download Teams From Yahoo League");
 
             Dictionary<int, string> yahooTeamsDic = new Dictionary<int, string>();
-            List<YahooTeam> yahooTeams = new List<YahooTeam>();
+            List<YahooLeagueTeam> yahooTeams = new List<YahooLeagueTeam>();
 
             var yahooLeagueUrl = ConfigurationManager.AppSettings["YahooLeague"];
             using var client = new HttpClient();
@@ -40,7 +40,7 @@ namespace CreateEspnDBFile
             }
 
             Console.WriteLine("Start Download Players From Yahoo League");
-            yahooTeams = yahooTeamsDic.AsParallel().WithDegreeOfParallelism(yahooTeamsDic.Count).Select(t => new YahooTeam()
+            yahooTeams = yahooTeamsDic.AsParallel().WithDegreeOfParallelism(yahooTeamsDic.Count).Select(t => new YahooLeagueTeam()
                 { Id = t.Key, Name = t.Value, PlayersNames = GetTeamPlayersFromYahoo(t.Key) }).ToList();
 
             return yahooTeams;
@@ -66,7 +66,7 @@ namespace CreateEspnDBFile
         }
     }
 
-    public class YahooTeam
+    public class YahooLeagueTeam
     {
         public int Id;
         public string Name;
