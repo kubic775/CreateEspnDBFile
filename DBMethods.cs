@@ -14,6 +14,7 @@ namespace CreateEspnDBFile
     public class DBMethods
     {
         private static long _nextGamePk = -1;
+        private static Dictionary<long, string> _statusPlayers;
         private static readonly Mutex Mutex = new Mutex();
 
         public static string GetDataBaseConnectionString()
@@ -111,6 +112,9 @@ namespace CreateEspnDBFile
 
         public static void UpdatePlayersGames(PlayerInfo[] players)
         {
+            GetStatusPlayers();
+            TruncateTables();
+
             players = FilterPlayersNotValid(players);
             using var db = new EspnDB();
 
@@ -121,6 +125,19 @@ namespace CreateEspnDBFile
                 db.Players.AddRange(newPlayers);
                 db.SaveChanges();
                 Console.WriteLine($"{newPlayers.Length} New Players Uploaded To DB");
+            }
+
+            if (_statusPlayers != null && _statusPlayers.Count > 0)
+            {
+                Console.WriteLine("Start Update Status Players In DB");
+                foreach (KeyValuePair<long, string> player in _statusPlayers)
+                {
+                    var dbPlayer = db.Players.FirstOrDefault(p => p.Id == player.Key);
+                    if (dbPlayer == null) continue;
+                    dbPlayer.Status = player.Value;
+                    Console.WriteLine($"Set {dbPlayer.Name} To {dbPlayer.Status}");
+                }
+                db.SaveChanges();
             }
 
             var dbGames = db.Games.ToArray();
@@ -181,6 +198,27 @@ namespace CreateEspnDBFile
             else
                 db.GlobalParams.First().LastUpdateTime = DateTime.Now;
 
+            db.SaveChanges();
+        }
+
+        private static void GetStatusPlayers()
+        {
+            using var db = new EspnDB();
+            _statusPlayers = db.Players.Where(p => !string.IsNullOrEmpty(p.Status))
+                .ToDictionary(key => key.Id, val => val.Status);
+        }
+
+        private static void TruncateTables()
+        {
+            Console.WriteLine("Start Truncate Tables");
+            string[] tableNames = { "Games", "YahooTeams", "Players" };
+            using var db = new EspnDB();
+            foreach (string tableName in tableNames)
+            {
+                int rows = db.Database.ExecuteSqlRaw($"DELETE FROM {tableName}");//syntax for SQLite 
+                db.SaveChanges();
+            }
+            db.Database.ExecuteSqlRaw("VACUUM");//syntax for SQLite 
             db.SaveChanges();
         }
     }
