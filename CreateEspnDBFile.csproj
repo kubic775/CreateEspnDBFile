@@ -18,6 +18,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="PlayerNamesConverter.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Teams.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

@@ -62,7 +62,7 @@ namespace CreateEspnDBFile
                 players.Add(playerName);
                 i1 = teamStr.IndexOf(@"Nowrap name F-link", i2);
             }
-            return players.ToArray();
+            return players.Select(PlayerNameConverter.GetEspnPlayerName).ToArray();
         }
     }
 
