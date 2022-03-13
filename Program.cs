@@ -110,12 +110,14 @@ namespace CreateEspnDBFile
         {
             //Stopwatch sw = Stopwatch.StartNew();
             int counter = 1;
-            var players = playerIds.AsParallel().WithExecutionMode(ParallelExecutionMode.ForceParallelism).WithDegreeOfParallelism(64).Select(id =>
-            {
-                Console.Title = $"{counter++}/{playerIds.Length}";
-                return new PlayerInfo(id);
-            }).ToArray();
+            var players = playerIds.AsParallel().WithExecutionMode(ParallelExecutionMode.ForceParallelism).WithDegreeOfParallelism(Environment.ProcessorCount).Select(id =>
+              {
+                  Console.Title = $"{counter++}/{playerIds.Length}";
+                  return new PlayerInfo(id);
+              }).ToArray();
+            Console.Title = "Update DB...";
             DBMethods.UpdatePlayersGames(players);
+            Console.Title = "CreateEspnDBFile";
             //Console.WriteLine($"Total Runtime: {sw.Elapsed}");
         }
 

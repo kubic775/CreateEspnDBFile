@@ -159,10 +159,10 @@ namespace CreateEspnDBFile
         {
             var badPlayers = players.Where(p => !p.Valid).ToArray();
             Console.WriteLine($"Found {badPlayers.Length} Not Valid Players:");
-            foreach (var player in badPlayers)
+            foreach (PlayerInfo playerInfo in badPlayers)
             {
-                Console.WriteLine(player.ToString());
-                File.AppendAllText("badPlayers.txt", player + Environment.NewLine);
+                Console.WriteLine(playerInfo.Player.Name);
+                File.AppendAllText("badPlayers.txt", playerInfo.Player.Name + Environment.NewLine);
             }
 
             return players.Where(p => p.Valid).ToArray();

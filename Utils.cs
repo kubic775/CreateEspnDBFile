@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace CreateEspnDBFile
 {
@@ -14,16 +17,20 @@ namespace CreateEspnDBFile
 
         public static string GetSourceFromURL(string url)
         {
-            using (var client = new HttpClient())
-            {
-                using (HttpResponseMessage response = client.GetAsync(url).Result)
-                {
-                    using (HttpContent content = response.Content)
-                    {
-                        return content.ReadAsStringAsync().Result;
-                    }
-                }
-            }
+            using var client = new HttpClient();
+            return client.GetStringAsync(url).Result;
+            //using var wc = new WebClient();
+            //return wc.DownloadString(url);
+        }
+
+        public static async Task WriteTextAsync(string filePath, string text)
+        {
+            byte[] encodedText = Encoding.Unicode.GetBytes(text);
+
+            await using FileStream sourceStream = new FileStream(filePath,
+                FileMode.Append, FileAccess.Write, FileShare.None,
+                bufferSize: 4096, useAsync: true);
+            await sourceStream.WriteAsync(encodedText, 0, encodedText.Length);
         }
     }
 

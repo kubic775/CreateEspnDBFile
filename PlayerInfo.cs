@@ -4,6 +4,7 @@ using System.Configuration;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using CreateEspnDBFile.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -14,7 +15,7 @@ namespace CreateEspnDBFile
     {
         public readonly Player Player;
         public readonly List<Game> Games;
-        public bool Valid;
+        public readonly bool Valid;
 
         public PlayerInfo(int id)
         {
@@ -32,7 +33,8 @@ namespace CreateEspnDBFile
             {
                 Valid = false;
                 Console.WriteLine(e);
-                File.AppendAllLines("Errors.txt", new[] { $"{id}" });
+                Task.Run(() => Utils.WriteTextAsync("Errors.txt", $"{id}{Environment.NewLine}"));
+                //File.AppendAllLines("Errors.txt", new[] { $"{id}" });
                 Player = new Player { Id = id };
             }
         }
