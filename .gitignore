@@ -4,3 +4,5 @@
 /bin/Release/netcoreapp3.1/espn.sqlite
 /bin/Release/netcoreapp3.1/Errors.txt
 /bin
+/Properties/launchSettings.json
+/Properties/PublishProfiles/FolderProfile.pubxml.user

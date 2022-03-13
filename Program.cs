@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Timers;
+using CreateEspnDBFile.Models;
 using HtmlAgilityPack;
 using Timer = System.Timers.Timer;
 
@@ -14,42 +15,46 @@ namespace CreateEspnDBFile
 {
     class Program
     {
-        static Timer _updateTimer;
         private static readonly AutoResetEvent AutoResetEvent = new AutoResetEvent(false);
 
         static void Main(string[] args)
         {
             try
             {
-                InitTimer();
-                RunUpdateTimer(null, null);
-                AutoResetEvent.WaitOne();
+                if (args != null && args.Length > 0)
+                    RunUpdate(args[0]);
+                else
+                    RunUpdate();
             }
             catch (Exception e)
             {
                 Console.WriteLine(e);
             }
-            finally
-            {
-                _updateTimer?.Dispose();
-            }
+
+            Console.ReadLine();
         }
 
-        private static void InitTimer()
-        {
-            _updateTimer = new Timer(TimeSpan
-                .FromMinutes(ConfigurationManager.AppSettings["updateTimerInterval"].ToInt()).TotalMilliseconds);
-            _updateTimer.Elapsed += RunUpdateTimer;
-            _updateTimer.Start();
-        }
-
-        private static void RunUpdateTimer(object sender, ElapsedEventArgs e)
+        private static void RunUpdate(string playerIdsStr = null)
         {
             try
             {
                 Console.WriteLine($"{DateTime.Now} Start Update DB File");
                 Stopwatch sw = Stopwatch.StartNew();
-                UpdateDBFile();
+                if (playerIdsStr != null)
+                {
+                    if (!ValidatePlayersIds(playerIdsStr))
+                    {
+                        Console.WriteLine("Error - Players Ids argument not valid - only numbers and ',' are allowed");
+                        return;
+                    }
+                    var playerIds = playerIdsStr.Split(",", StringSplitOptions.RemoveEmptyEntries).Select(s => s.ToInt()).ToArray();
+                    UpdateDBFile(playerIds);
+                }
+                else
+                {
+                    UpdateDBFile();
+                }
+
                 Console.WriteLine($"Total Runtime: {sw.Elapsed}");
             }
             catch (Exception ex)
@@ -62,20 +67,16 @@ namespace CreateEspnDBFile
             }
         }
 
-        private static void UpdateDBFile()
+        private static bool ValidatePlayersIds(string playerIds)
         {
-            int[] playerIds;
+            return playerIds.All(c => char.IsDigit(c) || c == ',');
+        }
+
+        private static void UpdateDBFile(int[] playerIds = null)
+        {
             Console.WriteLine($"DB Path = {DBMethods.GetDataBaseConnectionString()}");
-            if (ConfigurationManager.AppSettings["updateSpecificPlayers"].ToBool())
-            {
-                playerIds = ConfigurationManager.AppSettings["specificPlayersIds"].
-                    Split(',', StringSplitOptions.RemoveEmptyEntries).Select(s => s.ToInt()).ToArray();
-            }
-            else
-            {
-                playerIds = File.ReadAllLines("Teams.txt").AsParallel().WithDegreeOfParallelism(32)
-                    .SelectMany(GetActivePlayersIds).OrderBy(i => i).ToArray();
-            }
+            playerIds ??= File.ReadAllLines("Teams.txt").AsParallel().WithDegreeOfParallelism(32)
+                .SelectMany(GetActivePlayersIds).OrderBy(i => i).ToArray();
             Console.WriteLine($"Found {playerIds.Length} PlayerIds");
 
             if (ConfigurationManager.AppSettings["runInParallel"].ToBool())
@@ -85,10 +86,8 @@ namespace CreateEspnDBFile
 
             if (ConfigurationManager.AppSettings["updateRostersPlayers"].ToBool())
             {
-                //Stopwatch sw = Stopwatch.StartNew();
                 var yahooTeams = YahooLeague.GetYahooTeams();
                 DBMethods.UpdateYahooTeams(yahooTeams);
-                //Console.WriteLine($"Total Runtime: {sw.Elapsed}");
             }
 
             Console.WriteLine($"Set LastUpdateTime - {DateTime.Now}");
@@ -124,27 +123,48 @@ namespace CreateEspnDBFile
         private static void UpdatePlayers(int[] playerIds)
         {
             int counter = 1;
+            var startTime = DateTime.Now.AddMinutes(-ConfigurationManager.AppSettings["updatePlayerMaxDelay"].ToInt());
+            var notValidPlayers = new List<(long, string)>();
             foreach (int playerId in playerIds)
             {
                 try
                 {
                     Console.Title = $"{counter}/{playerIds.Length}";
                     Console.WriteLine($"Start Create Player Id {playerId} ({counter++}/{playerIds.Length})");
-                    if (!ConfigurationManager.AppSettings["updateExistPlayer"].ToBool() && DBMethods.IsPlayerExist(playerId))
+                    Player dbPlayer = DBMethods.IsPlayerExist(playerId);
+                    if (dbPlayer == null)
                     {
-                        Console.WriteLine("Already Exist In DB");
-                        continue;
+                        var player = new PlayerInfo(playerId);
+                        if (player.Valid)
+                            DBMethods.AddNewPlayer(player);
+                        else
+                            notValidPlayers.Add((player.Player.Id, player.Player.Name));
                     }
-
-                    var player = new PlayerInfo(playerId);
-                    if (player.Valid)
-                        DBMethods.AddNewPlayer(player);
+                    else if (dbPlayer.LastUpdateTime < startTime)
+                    {
+                        Console.WriteLine($"Start Update Player {playerId} In DB ({dbPlayer.Name})");
+                        var player = new PlayerInfo(playerId, true);
+                        if (player.Valid)
+                            DBMethods.UpdateExistingPlayer(player);
+                        else
+                            notValidPlayers.Add((player.Player.Id, player.Player.Name));
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Player {playerId} Already Updated In DB ({dbPlayer.Name})");
+                    }
                 }
                 catch (Exception e)
                 {
                     Console.WriteLine(e);
                     File.AppendAllLines("Errors.txt", new[] { $"{playerId}" });
                 }
+            }
+
+            Console.WriteLine($"Found {notValidPlayers.Count } Not Valid Players:");
+            foreach ((long, string) notValidPlayer in notValidPlayers)
+            {
+                Console.WriteLine($"{notValidPlayer.Item1},{notValidPlayer.Item2}");
             }
         }
 

@@ -14,5 +14,6 @@ namespace CreateEspnDBFile.Models
         public string Misc { get; set; }
         public long? TeamNumber { get; set; }
         public string Status { get; set; }
+        public DateTime LastUpdateTime { get; set; }
     }
 }

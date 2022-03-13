@@ -128,6 +128,8 @@ namespace CreateEspnDBFile.Models
 
                 entity.Property(e => e.Age).HasColumnType("int");
 
+                entity.Property(e => e.LastUpdateTime).HasColumnType("datetime");
+
                 entity.Property(e => e.Misc).HasColumnType("varchar(32)");
 
                 entity.Property(e => e.Name).HasColumnType("varchar(32)");

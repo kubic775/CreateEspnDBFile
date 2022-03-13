@@ -17,7 +17,7 @@ namespace CreateEspnDBFile
         public readonly List<Game> Games;
         public readonly bool Valid;
 
-        public PlayerInfo(int id)
+        public PlayerInfo(int id, bool updateMode = false)
         {
             try
             {
@@ -26,7 +26,7 @@ namespace CreateEspnDBFile
                 Player = UpdatePlayerInfo(playerStr, id);
                 Console.WriteLine($"Current Player - {Player.Name}");
                 Games = new List<Game>();
-                CreatePlayerGames(playerUrl);
+                CreatePlayerGames(playerUrl, updateMode);
                 Valid = true;
             }
             catch (Exception e)
@@ -66,9 +66,9 @@ namespace CreateEspnDBFile
             return player;
         }
 
-        private void CreatePlayerGames(string playerUrl)
+        private void CreatePlayerGames(string playerUrl, bool updateMode = false)
         {
-            int gamesHistoryLength = ConfigurationManager.AppSettings["gamesHistoryLength"].ToInt();
+            int gamesHistoryLength = updateMode ? 0 : ConfigurationManager.AppSettings["gamesHistoryLength"].ToInt();
             var years = Enumerable.Range(Utils.GetCurrentYear() - gamesHistoryLength + 1, gamesHistoryLength + 1).Reverse();
 
             foreach (int year in years)
@@ -82,7 +82,7 @@ namespace CreateEspnDBFile
                     end = gamesData.IndexOf("Data provided by Elias Sports Bureau");
                 if (end == -1)
                     end = gamesData.IndexOf("glossary");
-                
+
                 if (start == -1 || end == -1) continue;
                 var gamesStr = gamesData.Substring(start, end - start);
                 var games = CreatePlayerGames(gamesStr, year);

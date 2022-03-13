@@ -61,12 +61,12 @@ namespace CreateEspnDBFile
                 return db.YahooTeams.Max(t => t.Pk) + 1;
         }
 
-        public static bool IsPlayerExist(long playerId)
+        public static Player IsPlayerExist(long playerId)
         {
             using var db = new EspnDB();
 
             var players = db.Players.ToList();
-            return players.Any(p => p.Id == playerId);
+            return players.FirstOrDefault(p => p.Id == playerId);
         }
 
         public static bool IsPlayerExist(Player player, Player[] dbPlayers)
@@ -88,16 +88,9 @@ namespace CreateEspnDBFile
         public static void AddNewPlayer(PlayerInfo player)
         {
             using var db = new EspnDB();
-            if (!IsPlayerExist(player.Player.Id))
-            {
-                db.Players.Add(player.Player);
-                db.SaveChanges();
-            }
-            else
-            {
-                if (!ConfigurationManager.AppSettings["updateExistPlayer"].ToBool())
-                    return;
-            }
+            player.Player.LastUpdateTime = DateTime.Now;
+            db.Players.Add(player.Player);
+            db.SaveChanges();
 
             foreach (Game game in player.Games)
             {
@@ -108,6 +101,36 @@ namespace CreateEspnDBFile
             }
             db.SaveChanges();
             Console.WriteLine($"Player {player.Player.Name} Uploaded To DB");
+        }
+
+        public static void UpdateExistingPlayer(PlayerInfo player)
+        {
+            using var db = new EspnDB();
+            var dbPlayer = db.Players.First(p => p.Id == player.Player.Id);
+            dbPlayer.Age = player.Player.Age;
+            dbPlayer.Misc = player.Player.Misc;
+            dbPlayer.Team = player.Player.Team;
+            dbPlayer.LastUpdateTime = DateTime.Now;
+
+            var lastPlayerGame = player.Games.First();
+            var lastDbGame = db.Games.FirstOrDefault(g => g.PlayerId == player.Player.Id && g.GameDate.Date.Equals(lastPlayerGame.GameDate.Date));
+            if (lastDbGame != null)
+                db.Games.Remove(lastDbGame);
+
+            db.SaveChanges();
+
+            var dbGamesDate = db.Games.Where(g => g.PlayerId == player.Player.Id).Select(g=>g.GameDate.Date).ToList();
+            int updatedGames = 0;
+            foreach (Game game in player.Games)
+            {
+                if (dbGamesDate.Contains(game.GameDate.Date))
+                    continue;
+                game.Pk = GetNextGamePk();
+                db.Games.Add(game);
+                updatedGames++;
+            }
+            db.SaveChanges();
+            Console.WriteLine($"Player {player.Player.Name} Updated In DB ({updatedGames} Games)");
         }
 
         public static void UpdatePlayersGames(PlayerInfo[] players)
