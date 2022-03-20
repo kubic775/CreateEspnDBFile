@@ -195,6 +195,8 @@ namespace CreateEspnDBFile
         {
             Console.WriteLine("Start Update Yahoo Teams And Players In DB");
             using var db = new EspnDB();
+            int rows = db.Database.ExecuteSqlRaw("UPDATE Players SET TeamNumber=null");
+            db.SaveChanges();
             foreach (var team in teams)
             {
                 var dbTeam = db.YahooTeams.FirstOrDefault(t => t.TeamId == team.Id);

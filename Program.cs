@@ -30,7 +30,7 @@ namespace CreateEspnDBFile
             {
                 Console.WriteLine(e);
             }
-
+            Console.WriteLine(string.Join("", Enumerable.Repeat('-', 100)));
             Console.ReadLine();
         }
 
