@@ -23,6 +23,7 @@ namespace CreateEspnDBFile.Models
         public virtual DbSet<LeagueTeam> LeagueTeams { get; set; }
         public virtual DbSet<Player> Players { get; set; }
         public virtual DbSet<YahooTeam> YahooTeams { get; set; }
+        public virtual DbSet<YahooTeamStat> YahooTeamStats { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -152,6 +153,49 @@ namespace CreateEspnDBFile.Models
                     .HasColumnName("pk");
 
                 entity.Property(e => e.TeamName).IsRequired();
+            });
+
+            modelBuilder.Entity<YahooTeamStat>(entity =>
+            {
+                entity.HasKey(e => e.Pk);
+
+                entity.Property(e => e.Pk)
+                    .HasColumnType("int")
+                    .ValueGeneratedNever();
+
+                entity.Property(e => e.Ast).HasColumnType("int");
+
+                entity.Property(e => e.Blk).HasColumnType("int");
+
+                entity.Property(e => e.FgPer).HasColumnType("double");
+
+                entity.Property(e => e.Fga).HasColumnType("int");
+
+                entity.Property(e => e.Fgm).HasColumnType("int");
+
+                entity.Property(e => e.FtPer).HasColumnType("double");
+
+                entity.Property(e => e.Fta).HasColumnType("int");
+
+                entity.Property(e => e.Ftm).HasColumnType("int");
+
+                entity.Property(e => e.GameDate).HasColumnType("datetime");
+
+                entity.Property(e => e.Gp)
+                    .HasColumnType("INT")
+                    .HasColumnName("GP");
+
+                entity.Property(e => e.Pts).HasColumnType("int");
+
+                entity.Property(e => e.Reb).HasColumnType("int");
+
+                entity.Property(e => e.Stl).HasColumnType("int");
+
+                entity.Property(e => e.To).HasColumnType("int");
+
+                entity.Property(e => e.Tpm).HasColumnType("int");
+
+                entity.Property(e => e.YahooTeamId).HasColumnType("int");
             });
 
             OnModelCreatingPartial(modelBuilder);

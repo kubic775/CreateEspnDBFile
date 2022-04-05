@@ -2,21 +2,18 @@
 using System.Collections.Generic;
 using System.Configuration;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
-using System.Timers;
 using CreateEspnDBFile.Models;
 using HtmlAgilityPack;
-using Timer = System.Timers.Timer;
 
 namespace CreateEspnDBFile
 {
     class Program
     {
-        private static readonly AutoResetEvent AutoResetEvent = new AutoResetEvent(false);
-
         static void Main(string[] args)
         {
             try
@@ -86,8 +83,11 @@ namespace CreateEspnDBFile
 
             if (ConfigurationManager.AppSettings["updateRostersPlayers"].ToBool())
             {
-                var yahooTeams = YahooLeague.GetYahooTeams();
+                List<YahooLeagueTeam> yahooTeams = YahooLeague.GetYahooTeams();
                 DBMethods.UpdateYahooTeams(yahooTeams);
+                YahooLeague.UpdateYahooTeamsStats(yahooTeams.Count,
+                    DateTime.ParseExact(ConfigurationManager.AppSettings["seasonStartDate"], "yyyy-MM-dd",
+                        CultureInfo.InvariantCulture));
             }
 
             Console.WriteLine($"Set LastUpdateTime - {DateTime.Now}");

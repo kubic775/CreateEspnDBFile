@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -32,6 +33,19 @@ namespace CreateEspnDBFile
                 bufferSize: 4096, useAsync: true);
             await sourceStream.WriteAsync(encodedText, 0, encodedText.Length);
         }
+
+        public static string GetObjectString<T>(T obj)
+        {
+            List<string> s = new List<string>();
+            foreach (PropertyDescriptor descriptor in TypeDescriptor.GetProperties(obj))
+            {
+                string name = descriptor.Name;
+                object value = descriptor.GetValue(obj);
+                s.Add($"{name}={value}");
+            }
+
+            return string.Join(",", s);
+        }
     }
 
     public static class StringExtensions
@@ -40,6 +54,14 @@ namespace CreateEspnDBFile
         {
             int.TryParse(str, out int num);
             return num;
+        }
+
+        public static double? ToDouble(this string str)
+        {
+            if (double.TryParse(str, out double num))
+                return num;
+            else
+                return null;
         }
 
         public static bool ToBool(this string str)

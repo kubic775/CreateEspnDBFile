@@ -14,6 +14,7 @@ namespace CreateEspnDBFile
     public class DBMethods
     {
         private static long _nextGamePk = -1;
+        private static long _nextTeamStatsPk = -1;
         private static Dictionary<long, string> _statusPlayers;
         private static readonly Mutex Mutex = new Mutex();
 
@@ -119,7 +120,7 @@ namespace CreateEspnDBFile
 
             db.SaveChanges();
 
-            var dbGamesDate = db.Games.Where(g => g.PlayerId == player.Player.Id).Select(g=>g.GameDate.Date).ToList();
+            var dbGamesDate = db.Games.Where(g => g.PlayerId == player.Player.Id).Select(g => g.GameDate.Date).ToList();
             int updatedGames = 0;
             foreach (Game game in player.Games)
             {
@@ -246,5 +247,84 @@ namespace CreateEspnDBFile
             db.Database.ExecuteSqlRaw("VACUUM");//syntax for SQLite 
             db.SaveChanges();
         }
+
+        #region YahooTeamStats
+        private static long GetNextTeamStatsPk()
+        {
+            long pk;
+            Mutex.WaitOne();
+            try
+            {
+                if (_nextTeamStatsPk == -1)
+                {
+                    using var db = new EspnDB();
+                    _nextTeamStatsPk = !db.YahooTeamStats.Any() ? 1 : db.YahooTeamStats.Max(g => g.Pk) + 1;
+                    pk = _nextTeamStatsPk;
+                }
+                else
+                {
+                    pk = ++_nextTeamStatsPk;
+                }
+            }
+            catch (Exception)
+            {
+                pk = _nextTeamStatsPk = 1;
+            }
+            finally
+            {
+                Mutex.ReleaseMutex();
+            }
+            return pk;
+        }
+
+        public static long[] GetMissingTeamStatsIds(int numOfTeams, DateTime date)
+        {
+            using var db = new EspnDB();
+            long[] existTeamsIds = db.YahooTeamStats.Where(t => t.GameDate == date).Select(t => t.YahooTeamId.Value).ToArray();
+            return Enumerable.Range(1, numOfTeams).Select(Convert.ToInt64).Where(i=>!existTeamsIds.Contains(i)).ToArray();
+        }
+
+        public static Dictionary<long, DateTime> GetLastTeamStatDate()
+        {
+            using var db = new EspnDB();
+            Dictionary<long, DateTime> teamStats = db.YahooTeamStats.ToList().GroupBy(team => team.YahooTeamId.Value)
+                .ToDictionary(key => key.Key, val => val.Select(g=>g.GameDate).OrderByDescending(d=>d).First());
+            return teamStats;
+        }
+
+        public static void UploadTeamStats(IEnumerable<YahooTeamStat> teamStats)
+        {
+            using var db = new EspnDB();
+            foreach (var teamStat in teamStats)
+            {
+                var dbTeamStats = db.YahooTeamStats.FirstOrDefault(t =>
+                    t.YahooTeamId == teamStat.YahooTeamId && t.GameDate == teamStat.GameDate);
+                if (dbTeamStats == null)
+                {
+                    teamStat.Pk = GetNextTeamStatsPk();
+                    db.YahooTeamStats.Add(teamStat);
+                }
+                else
+                {
+                    dbTeamStats.Ast = teamStat.Ast;
+                    dbTeamStats.Reb = teamStat.Reb;
+                    dbTeamStats.Blk = teamStat.Blk;
+                    dbTeamStats.Pts = teamStat.Pts;
+                    dbTeamStats.Tpm = teamStat.Tpm;
+                    dbTeamStats.Stl = teamStat.Stl;
+                    dbTeamStats.To = teamStat.To;
+                    dbTeamStats.Fgm = teamStat.Fgm;
+                    dbTeamStats.Fga = teamStat.Fga;
+                    dbTeamStats.FgPer = teamStat.FgPer;
+                    dbTeamStats.Ftm = teamStat.Ftm;
+                    dbTeamStats.Fta = teamStat.Fta;
+                    dbTeamStats.FtPer = teamStat.FtPer;
+                }
+            }
+
+            db.SaveChanges();
+        }
+
+        #endregion
     }
 }
