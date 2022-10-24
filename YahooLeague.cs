@@ -24,7 +24,7 @@ namespace CreateEspnDBFile
             using var client = new HttpClient();
             var leagueStr = client.GetStringAsync(yahooLeagueUrl).Result;
 
-            var pattern = @"https://basketball.fantasysports.yahoo.com/nba/5867/";
+            var pattern = @"https://basketball.fantasysports.yahoo.com/nba/7764/";//ToDO: fixxxxxxxxxxx
             var pattern2 = @"</a>";
             int i1 = leagueStr.IndexOf(pattern);
             while (i1 != -1)
