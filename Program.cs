@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Threading.Tasks;
 using CreateEspnDBFile.Models;
 using HtmlAgilityPack;
 
@@ -28,7 +29,9 @@ namespace CreateEspnDBFile
                 Console.WriteLine(e);
             }
             Console.WriteLine(string.Join("", Enumerable.Repeat('-', 100)));
-            Console.ReadLine();
+            Console.Title = "Update NBA DB File - Done";
+            Task.Delay(new TimeSpan(1, 0, 0)).Wait();
+            //            Console.ReadLine();
         }
 
         private static void RunUpdate(string playerIdsStr = null)
@@ -161,7 +164,7 @@ namespace CreateEspnDBFile
                 }
             }
 
-            Console.WriteLine($"Found {notValidPlayers.Count } Not Valid Players:");
+            Console.WriteLine($"Found {notValidPlayers.Count} Not Valid Players:");
             foreach ((long, string) notValidPlayer in notValidPlayers)
             {
                 Console.WriteLine($"{notValidPlayer.Item1},{notValidPlayer.Item2}");
