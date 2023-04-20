@@ -77,7 +77,9 @@ namespace CreateEspnDBFile
                 var gamesData = Utils.GetSourceFromURL(gamesUrl);
                 int start = gamesData.IndexOf("Regular Season");
                 if (start == -1) continue;
-                int end = gamesData.IndexOf("Preseason");
+                int end = gamesData.IndexOf("Spring Regular Season");
+                if (end == -1)
+                    end = gamesData.IndexOf("Preseason");
                 if (end == -1)
                     end = gamesData.IndexOf("Data provided by Elias Sports Bureau");
                 if (end == -1)
