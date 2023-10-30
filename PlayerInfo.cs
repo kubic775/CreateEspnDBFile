@@ -44,7 +44,7 @@ namespace CreateEspnDBFile
             string pattern = "{\"app\"";
             string pattern2 = ";</script>";
             var i1 = playerStr.IndexOf(pattern);
-            var i2 = playerStr.IndexOf(pattern2);
+            var i2 = playerStr.IndexOf(pattern2,i1);
             if (i1 == -1) return null;
             string jsonStr = playerStr.Substring(i1, i2 - i1);
             JObject json = JObject.Parse(jsonStr);

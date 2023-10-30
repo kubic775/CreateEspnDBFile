@@ -14,17 +14,20 @@ namespace CreateEspnDBFile
     public static class YahooLeague
     {
         public static List<YahooLeagueTeam> GetYahooTeams()
-        {
+        { 
             Console.WriteLine("\nStart Download Teams From Yahoo League");
+           
+            var yahooLeagueId = ConfigurationManager.AppSettings["YahooLeagueId"];
+            var yahooLeagueUrl = ConfigurationManager.AppSettings["YahooLeagueUtl"].Replace("{YahooLeagueId}", yahooLeagueId);
 
             Dictionary<int, string> yahooTeamsDic = new Dictionary<int, string>();
             List<YahooLeagueTeam> yahooTeams = new List<YahooLeagueTeam>();
 
-            var yahooLeagueUrl = ConfigurationManager.AppSettings["YahooLeague"];
+            
             using var client = new HttpClient();
             var leagueStr = client.GetStringAsync(yahooLeagueUrl).Result;
 
-            var pattern = @"https://basketball.fantasysports.yahoo.com/nba/7764/";//ToDO: fixxxxxxxxxxx
+            var pattern = @$"https://basketball.fantasysports.yahoo.com/nba/{yahooLeagueId}/";
             var pattern2 = @"</a>";
             int i1 = leagueStr.IndexOf(pattern);
             while (i1 != -1)
@@ -43,24 +46,26 @@ namespace CreateEspnDBFile
             }
 
             Console.WriteLine("Start Download Players From Yahoo League");
+            string yahooTeamsUrl = ConfigurationManager.AppSettings["yahooTeamsUrl"].Replace("{YahooLeagueId}", yahooLeagueId);
             yahooTeams = yahooTeamsDic.AsParallel().WithDegreeOfParallelism(yahooTeamsDic.Count).Select(t => new YahooLeagueTeam
-            { Id = t.Key, Name = t.Value, PlayersNames = GetTeamPlayersFromYahoo(t.Key) }).ToList();
+            { Id = t.Key, Name = t.Value, PlayersNames = GetTeamPlayersFromYahoo(yahooTeamsUrl,t.Key) }).ToList();
 
             return yahooTeams;
         }
 
-        private static string[] GetTeamPlayersFromYahoo(int teamNumber)
+        private static string[] GetTeamPlayersFromYahoo(string yahooTeamsUrl, int teamNumber)
         {
             HashSet<string> players = new HashSet<string>();
             using var client = new HttpClient();
-            var teamUrl = ConfigurationManager.AppSettings["yahooTeamsUrl"].Replace("{teamId}", teamNumber.ToString());
+            var teamUrl = yahooTeamsUrl.Replace("{teamId}", teamNumber.ToString());
             var teamStr = client.GetStringAsync(teamUrl).Result;
 
             int i1 = teamStr.IndexOf(@"Nowrap name F-link");
             while (i1 != -1)
             {
-                int i2 = teamStr.IndexOf(@"</a>", i1);
-                string playerName = teamStr.Substring(i1 + 85, i2 - i1 - 85);
+                int i11 = teamStr.IndexOf("\">",i1);
+                int i2 = teamStr.IndexOf(@"</a>", i11);
+                string playerName = teamStr.Substring(i11 + "\">".Length, i2 - i11- "\">".Length);
                 players.Add(playerName);
                 i1 = teamStr.IndexOf(@"Nowrap name F-link", i2);
             }
@@ -87,8 +92,9 @@ namespace CreateEspnDBFile
         {
             Task.Delay(1_000).Wait();//do not remove this line as it necessary to not being ban from Yahoo
             Console.WriteLine($"Yahoo Team Number - {teamNumber}, {date:yyyy-MM-dd}");
-            var teamUrl = ConfigurationManager.AppSettings["yahooTeamsUrl"].Replace("{teamId}", teamNumber.ToString()) +
-                          $"/team?&date={date:yyyy-MM-dd}";
+            var teamUrl = ConfigurationManager.AppSettings["yahooTeamsUrl"].
+                              Replace("{YahooLeagueId}", ConfigurationManager.AppSettings["YahooLeagueId"]).
+                              Replace("{teamId}", teamNumber.ToString()) + $"/team?&date={date:yyyy-MM-dd}";
             using var client = new HttpClient();
             var teamStatsStr = client.GetStringAsync(teamUrl).Result;
 

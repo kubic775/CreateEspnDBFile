@@ -147,7 +147,7 @@ namespace CreateEspnDBFile
                     {
                         Console.WriteLine($"Start Update Player {playerId} In DB ({dbPlayer.Name})");
                         var player = new PlayerInfo(playerId, true);
-                        if (player.Valid)
+                        if (player.Valid && player.Games.Any())
                             DBMethods.UpdateExistingPlayer(player);
                         else
                             notValidPlayers.Add((player.Player.Id, player.Player.Name));

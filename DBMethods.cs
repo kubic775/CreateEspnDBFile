@@ -107,18 +107,21 @@ namespace CreateEspnDBFile
         public static void UpdateExistingPlayer(PlayerInfo player)
         {
             using var db = new EspnDB();
-            var dbPlayer = db.Players.First(p => p.Id == player.Player.Id);
-            dbPlayer.Age = player.Player.Age;
-            dbPlayer.Misc = player.Player.Misc;
-            dbPlayer.Team = player.Player.Team;
-            dbPlayer.LastUpdateTime = DateTime.Now;
+            //var dbPlayer = db.Players.First(p => p.Id == player.Player.Id);
+            //dbPlayer.Age = player.Player.Age;
+            //dbPlayer.Misc = player.Player.Misc;
+            //dbPlayer.Team = player.Player.Team;
+            //dbPlayer.LastUpdateTime = DateTime.Now;
 
-            var lastPlayerGame = player.Games.First();
-            var lastDbGame = db.Games.FirstOrDefault(g => g.PlayerId == player.Player.Id && g.GameDate.Date.Equals(lastPlayerGame.GameDate.Date));
-            if (lastDbGame != null)
-                db.Games.Remove(lastDbGame);
+            var lastPlayerGame = player.Games.FirstOrDefault();
+            if (lastPlayerGame != null)
+            {
+                var lastDbGame = db.Games.FirstOrDefault(g => g.PlayerId == player.Player.Id && g.GameDate.Date.Equals(lastPlayerGame.GameDate.Date));
+                if (lastDbGame != null)
+                    db.Games.Remove(lastDbGame);
 
-            db.SaveChanges();
+                db.SaveChanges();
+            }
 
             var dbGamesDate = db.Games.Where(g => g.PlayerId == player.Player.Id).Select(g => g.GameDate.Date).ToList();
             int updatedGames = 0;
@@ -281,14 +284,14 @@ namespace CreateEspnDBFile
         {
             using var db = new EspnDB();
             long[] existTeamsIds = db.YahooTeamStats.Where(t => t.GameDate == date).Select(t => t.YahooTeamId.Value).ToArray();
-            return Enumerable.Range(1, numOfTeams).Select(Convert.ToInt64).Where(i=>!existTeamsIds.Contains(i)).ToArray();
+            return Enumerable.Range(1, numOfTeams).Select(Convert.ToInt64).Where(i => !existTeamsIds.Contains(i)).ToArray();
         }
 
         public static Dictionary<long, DateTime> GetLastTeamStatDate()
         {
             using var db = new EspnDB();
             Dictionary<long, DateTime> teamStats = db.YahooTeamStats.ToList().GroupBy(team => team.YahooTeamId.Value)
-                .ToDictionary(key => key.Key, val => val.Select(g=>g.GameDate).OrderByDescending(d=>d).First());
+                .ToDictionary(key => key.Key, val => val.Select(g => g.GameDate).OrderByDescending(d => d).First());
             return teamStats;
         }
 
