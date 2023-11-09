@@ -26,7 +26,7 @@ namespace CreateEspnDBFile
                 Player = UpdatePlayerInfo(playerStr, id);
                 Console.WriteLine($"Current Player - {Player.Name}");
                 Games = new List<Game>();
-                CreatePlayerGames(playerUrl, updateMode);
+                CreatePlayerGames(playerUrl, ConfigurationManager.AppSettings["updateHistoryGames"].ToBool());
                 Valid = true;
             }
             catch (Exception e)
@@ -44,7 +44,7 @@ namespace CreateEspnDBFile
             string pattern = "{\"app\"";
             string pattern2 = ";</script>";
             var i1 = playerStr.IndexOf(pattern);
-            var i2 = playerStr.IndexOf(pattern2,i1);
+            var i2 = playerStr.IndexOf(pattern2, i1);
             if (i1 == -1) return null;
             string jsonStr = playerStr.Substring(i1, i2 - i1);
             JObject json = JObject.Parse(jsonStr);
@@ -66,9 +66,9 @@ namespace CreateEspnDBFile
             return player;
         }
 
-        private void CreatePlayerGames(string playerUrl, bool updateMode = false)
+        private void CreatePlayerGames(string playerUrl, bool updateHistoryGames = false)
         {
-            int gamesHistoryLength = updateMode ? 0 : ConfigurationManager.AppSettings["gamesHistoryLength"].ToInt();
+            int gamesHistoryLength = updateHistoryGames ? ConfigurationManager.AppSettings["gamesHistoryLength"].ToInt() : 0;
             var years = Enumerable.Range(Utils.GetCurrentYear() - gamesHistoryLength + 1, gamesHistoryLength + 1).Reverse();
 
             foreach (int year in years)
