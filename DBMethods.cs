@@ -107,11 +107,11 @@ namespace CreateEspnDBFile
         public static void UpdateExistingPlayer(PlayerInfo player)
         {
             using var db = new EspnDB();
-            //var dbPlayer = db.Players.First(p => p.Id == player.Player.Id);
-            //dbPlayer.Age = player.Player.Age;
-            //dbPlayer.Misc = player.Player.Misc;
-            //dbPlayer.Team = player.Player.Team;
-            //dbPlayer.LastUpdateTime = DateTime.Now;
+            var dbPlayer = db.Players.First(p => p.Id == player.Player.Id);
+            dbPlayer.Age = player.Player.Age;
+            dbPlayer.Misc = player.Player.Misc;
+            dbPlayer.Team = player.Player.Team;
+            dbPlayer.LastUpdateTime = DateTime.Now;
 
             var lastPlayerGame = player.Games.FirstOrDefault();
             if (lastPlayerGame != null)

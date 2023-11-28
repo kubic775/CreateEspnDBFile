@@ -15,7 +15,7 @@ namespace CreateEspnDBFile
     {
         public static List<YahooLeagueTeam> GetYahooTeams()
         { 
-            Console.WriteLine("\nStart Download Teams From Yahoo League");
+            Console.WriteLine("\nStart Download Teams Names From Yahoo League");
            
             var yahooLeagueId = ConfigurationManager.AppSettings["YahooLeagueId"];
             var yahooLeagueUrl = ConfigurationManager.AppSettings["YahooLeagueUtl"].Replace("{YahooLeagueId}", yahooLeagueId);
@@ -45,16 +45,20 @@ namespace CreateEspnDBFile
                 i1 = leagueStr.IndexOf(pattern, i1 + 1);
             }
 
-            Console.WriteLine("Start Download Players From Yahoo League");
             string yahooTeamsUrl = ConfigurationManager.AppSettings["yahooTeamsUrl"].Replace("{YahooLeagueId}", yahooLeagueId);
-            yahooTeams = yahooTeamsDic.AsParallel().WithDegreeOfParallelism(yahooTeamsDic.Count).Select(t => new YahooLeagueTeam
-            { Id = t.Key, Name = t.Value, PlayersNames = GetTeamPlayersFromYahoo(yahooTeamsUrl,t.Key) }).ToList();
+            yahooTeams = yahooTeamsDic.Select(t => new YahooLeagueTeam
+                { Id = t.Key, Name = t.Value, PlayersNames = GetTeamPlayersFromYahoo(yahooTeamsUrl, t.Key, t.Value) }).ToList();
+
+            //Console.WriteLine("Start Download Players From Yahoo League");
+            //yahooTeams = yahooTeamsDic.AsParallel().WithDegreeOfParallelism(yahooTeamsDic.Count).Select(t =>
+            //        new YahooLeagueTeam { Id = t.Key, Name = t.Value, PlayersNames = GetTeamPlayersFromYahoo(yahooTeamsUrl, t.Key) }).ToList();
 
             return yahooTeams;
         }
 
-        private static string[] GetTeamPlayersFromYahoo(string yahooTeamsUrl, int teamNumber)
+        private static string[] GetTeamPlayersFromYahoo(string yahooTeamsUrl, int teamNumber, string teamName)
         {
+            Console.WriteLine($"Start Download {teamName} Players From Yahoo League");
             HashSet<string> players = new HashSet<string>();
             using var client = new HttpClient();
             var teamUrl = yahooTeamsUrl.Replace("{teamId}", teamNumber.ToString());

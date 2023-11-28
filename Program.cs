@@ -137,7 +137,7 @@ namespace CreateEspnDBFile
                     Player dbPlayer = DBMethods.IsPlayerExist(playerId);
                     if (dbPlayer == null)
                     {
-                        var player = new PlayerInfo(playerId);
+                        PlayerInfo player = new PlayerInfo(playerId);
                         if (player.Valid)
                             DBMethods.AddNewPlayer(player);
                         else
