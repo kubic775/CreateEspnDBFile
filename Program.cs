@@ -6,7 +6,6 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
 using CreateEspnDBFile.Models;
 using HtmlAgilityPack;
@@ -19,7 +18,7 @@ namespace CreateEspnDBFile
         {
             try
             {
-                if (args != null && args.Length > 0)
+                if (args is { Length: > 0 })
                     RunUpdate(args[0]);
                 else
                     RunUpdate();
@@ -172,5 +171,4 @@ namespace CreateEspnDBFile
         }
 
     }
-
 }

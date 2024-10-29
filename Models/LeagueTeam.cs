@@ -1,15 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 
-#nullable disable
+namespace CreateEspnDBFile.Models;
 
-namespace CreateEspnDBFile.Models
+public partial class LeagueTeam
 {
-    public partial class LeagueTeam
-    {
-        public long Pk { get; set; }
-        public string Name { get; set; }
-        public string Abbreviation { get; set; }
-        public long? TeamId { get; set; }
-    }
+    public int Pk { get; set; }
+
+    public string Name { get; set; }
+
+    public string Abbreviation { get; set; }
+
+    public int? TeamId { get; set; }
 }

@@ -1,28 +1,41 @@
 ﻿using System;
 using System.Collections.Generic;
 
-#nullable disable
+namespace CreateEspnDBFile.Models;
 
-namespace CreateEspnDBFile.Models
+public partial class YahooTeamStat
 {
-    public partial class YahooTeamStat
-    {
-        public long Pk { get; set; }
-        public DateTime GameDate { get; set; }
-        public long? YahooTeamId { get; set; }
-        public long? Pts { get; set; }
-        public long? Reb { get; set; }
-        public long? Ast { get; set; }
-        public long? Tpm { get; set; }
-        public long? Fga { get; set; }
-        public long? Fgm { get; set; }
-        public double? FgPer { get; set; }
-        public long? Fta { get; set; }
-        public long? Ftm { get; set; }
-        public double? FtPer { get; set; }
-        public long? Stl { get; set; }
-        public long? Blk { get; set; }
-        public long? To { get; set; }
-        public long? Gp { get; set; }
-    }
+    public int Pk { get; set; }
+
+    public DateTime GameDate { get; set; }
+
+    public int? YahooTeamId { get; set; }
+
+    public int? Pts { get; set; }
+
+    public int? Reb { get; set; }
+
+    public int? Ast { get; set; }
+
+    public int? Tpm { get; set; }
+
+    public int? Fga { get; set; }
+
+    public int? Fgm { get; set; }
+
+    public double? FgPer { get; set; }
+
+    public int? Fta { get; set; }
+
+    public int? Ftm { get; set; }
+
+    public double? FtPer { get; set; }
+
+    public int? Stl { get; set; }
+
+    public int? Blk { get; set; }
+
+    public int? To { get; set; }
+
+    public int? Gp { get; set; }
 }

@@ -10,12 +10,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CreateEspnDBFile
 {
-    //Scaffold-Dbcontext "DataSource=Z:\Dropbox\NBA fantasy\CreateEspnDBFile\espn.sqlite" Microsoft.EntityFrameworkCore.Sqlite -Context EspnDB -OutputDir Models -f
+    //Scaffold-Dbcontext "DataSource=C:\Users\Kubic\Dropbox\NBA fantasy\CreateEspnDBFile\espn.sqlite" Microsoft.EntityFrameworkCore.Sqlite -Context EspnDB -OutputDir Models -f
     public class DBMethods
     {
-        private static long _nextGamePk = -1;
-        private static long _nextTeamStatsPk = -1;
-        private static Dictionary<long, string> _statusPlayers;
+        private static int _nextGamePk = -1;
+        private static int _nextTeamStatsPk = -1;
+        private static Dictionary<int, string> _statusPlayers;
         private static readonly Mutex Mutex = new Mutex();
 
         public static string GetDataBaseConnectionString()
@@ -24,9 +24,9 @@ namespace CreateEspnDBFile
             return db.Database.GetDbConnection().ConnectionString;
         }
 
-        private static long GetNextGamePk()
+        private static int GetNextGamePk()
         {
-            long pk;
+            int pk;
             Mutex.WaitOne();
             try
             {
@@ -53,7 +53,7 @@ namespace CreateEspnDBFile
             return pk;
         }
 
-        private static long GetNextYahooTeamPk()
+        private static int GetNextYahooTeamPk()
         {
             using var db = new EspnDB();
             if (!db.YahooTeams.Any())
@@ -62,7 +62,7 @@ namespace CreateEspnDBFile
                 return db.YahooTeams.Max(t => t.Pk) + 1;
         }
 
-        public static Player IsPlayerExist(long playerId)
+        public static Player IsPlayerExist(int playerId)
         {
             using var db = new EspnDB();
 
@@ -75,7 +75,7 @@ namespace CreateEspnDBFile
             return dbPlayers.Any(p => p.Id == player.Id);
         }
 
-        public static bool IsGameExist(long playerId, DateTime gameDate)
+        public static bool IsGameExist(int playerId, DateTime gameDate)
         {
             using var db = new EspnDB();
             return db.Games.Any(g => g.PlayerId == playerId && g.GameDate.Date.Equals(gameDate.Date));
@@ -157,7 +157,7 @@ namespace CreateEspnDBFile
             if (_statusPlayers != null && _statusPlayers.Count > 0)
             {
                 Console.WriteLine("Start Update Status Players In DB");
-                foreach (KeyValuePair<long, string> player in _statusPlayers)
+                foreach (KeyValuePair<int, string> player in _statusPlayers)
                 {
                     var dbPlayer = db.Players.FirstOrDefault(p => p.Id == player.Key);
                     if (dbPlayer == null) continue;
@@ -252,9 +252,9 @@ namespace CreateEspnDBFile
         }
 
         #region YahooTeamStats
-        private static long GetNextTeamStatsPk()
+        private static int GetNextTeamStatsPk()
         {
-            long pk;
+            int pk;
             Mutex.WaitOne();
             try
             {
@@ -280,17 +280,17 @@ namespace CreateEspnDBFile
             return pk;
         }
 
-        public static long[] GetMissingTeamStatsIds(int numOfTeams, DateTime date)
+        public static int[] GetMissingTeamStatsIds(int numOfTeams, DateTime date)
         {
             using var db = new EspnDB();
-            long[] existTeamsIds = db.YahooTeamStats.Where(t => t.GameDate == date).Select(t => t.YahooTeamId.Value).ToArray();
-            return Enumerable.Range(1, numOfTeams).Select(Convert.ToInt64).Where(i => !existTeamsIds.Contains(i)).ToArray();
+            var existTeamsIds = db.YahooTeamStats.Where(t => t.GameDate == date).Select(t => t.YahooTeamId.Value).ToArray();
+            return Enumerable.Range(1, numOfTeams).Where(i => !existTeamsIds.Contains(i)).ToArray();
         }
 
-        public static Dictionary<long, DateTime> GetLastTeamStatDate()
+        public static Dictionary<int, DateTime> GetLastTeamStatDate()
         {
             using var db = new EspnDB();
-            Dictionary<long, DateTime> teamStats = db.YahooTeamStats.ToList().GroupBy(team => team.YahooTeamId.Value)
+            var teamStats = db.YahooTeamStats.ToList().GroupBy(team => team.YahooTeamId.Value)
                 .ToDictionary(key => key.Key, val => val.Select(g => g.GameDate).OrderByDescending(d => d).First());
             return teamStats;
         }

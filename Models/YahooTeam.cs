@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 
-#nullable disable
+namespace CreateEspnDBFile.Models;
 
-namespace CreateEspnDBFile.Models
+public partial class YahooTeam
 {
-    public partial class YahooTeam
-    {
-        public long Pk { get; set; }
-        public long TeamId { get; set; }
-        public string TeamName { get; set; }
-    }
+    public int Pk { get; set; }
+
+    public int TeamId { get; set; }
+
+    public string TeamName { get; set; }
 }

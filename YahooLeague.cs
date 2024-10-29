@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CreateEspnDBFile.Models;
@@ -92,7 +91,7 @@ namespace CreateEspnDBFile
             }
         }
 
-        private static YahooTeamStat GetYahooTeamStats(long teamNumber, DateTime date)
+        private static YahooTeamStat GetYahooTeamStats(int teamNumber, DateTime date)
         {
             Task.Delay(1_000).Wait();//do not remove this line as it necessary to not being ban from Yahoo
             Console.WriteLine($"Yahoo Team Number - {teamNumber}, {date:yyyy-MM-dd}");
